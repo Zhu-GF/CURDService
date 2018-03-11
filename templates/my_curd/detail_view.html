@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>详细信息</title>
+</head>
+<body>
+<h1>查看详细页</h1>
+<table border="1px">
+    <thead>
+    <tr>
+        {% for key,val in detail_dict.items %}
+        <th>{{ key }}</th>
+        {% endfor %}
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        {% for key,val in detail_dict.items %}
+        <td>{{ val }}</td>
+        {% endfor %}
+    </tr>
+    </tbody>
+</table>
+
+
+</body>
+</html>

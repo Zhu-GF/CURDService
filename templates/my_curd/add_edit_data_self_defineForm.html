@@ -1,0 +1,34 @@
+<form action="" method="post">
+    {% csrf_token %}
+    {% for row in forms_list %}
+    {% if row.is_popup %}
+    <p>{{ row.item.label }}:{{ row.item }}{{ row.item.errors.0 }}<a href="#"
+                                                                    onclick="OpenPopupWindow('{{ row.popup_url }}');">添加</a>
+    </p>
+    {% else %}
+    <p>{{ row.item.label }}:{{ row.item }}{{ row.item.errors.0 }}</p>
+    {% endif %}
+    {% endfor %}
+    <input type="submit" value="提交">
+</form>
+<script>
+    /*窗口会将值回传到此处*/
+    function CallBack(data_dict) {
+//        {#        console.log(data_dict);#
+        }
+        /*将获取的数据添加到select框中，并默认选中*/
+        var select_tag = document.getElementById(data_dict.popup_id);
+        /*找到select框*/
+        var option_tag = document.createElement('option');
+        /*新建option标签，并将值设置并选中*/
+        option_tag.innerHTML = data_dict.text;
+        option_tag.setAttribute('value', data_dict.pk);
+        option_tag.setAttribute('selected', 'selected');
+        select_tag.appendChild(option_tag);
+    }
+
+    /*popup窗口打开的函数*/
+    function OpenPopupWindow(url) {
+        window.open(url, url, 'status=1,height:500,width:600,toolbar=0,resizeable=0')
+    }
+</script>

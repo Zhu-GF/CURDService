@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>The Window is Closing</title>
+</head>
+<body>
+{#/*此处会接收修改或添加完成的值，并将数据传到父级的popup window*/#}
+<p>{{ data_dict|safe }}</p>
+<script>
+    var data_dict = {{ data_dict | safe }};
+    /*获取到新增数据后服务器传到的新增的数据*/
+    opener.CallBack(data_dict);
+    /*利用opener将数据传到上一级打开本页面的网页，并调用此回调函数*/
+    window.close();
+</script>
+</body>
+</html>

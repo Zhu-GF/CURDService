@@ -1,0 +1,155 @@
+软件说明：
+本软件是基于Django的万能增删改查插件，前端页面仅展示数据（可自定制）。
+本软件仿照Django Admin制作
+
+1.原理说明：
+Django启动的时候会执行apps中的文件，本软件在apps.py定义read()方法，自动找到其他app中的my_curd.py 文件去执行
+from django.apps import AppConfig
+
+
+class CurdserviceConfig(AppConfig):
+    name = 'CURDService'
+
+    def ready(self):
+        super(CurdserviceConfig, self).ready()
+        from django.utils.module_loading import autodiscover_modules
+        autodiscover_modules('my_curd')
+
+2.使用方法：
+a.---------------在Django项目中注释掉和admin相关的配置-------------------
+MIDDLEWARE = [
+    ...
+    # 'django.contrib.auth.middleware.AuthenticationMiddleware',
+    # 'django.contrib.messages.middleware.MessageMiddleware',
+     ...
+]
+
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                # 'django.contrib.auth.context_processors.auth',  #注释掉
+                # 'django.contrib.messages.context_processors.messages', #注释掉
+            ],
+        },
+    },
+]
+#-----------------------以下全部注释掉-----------------------------
+AUTH_PASSWORD_VALIDATORS = [
+    # {
+    #     'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    # },
+    # {
+    #     'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+    # },
+    # {
+    #     'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    # },
+    # {
+    #     'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    # },
+]
+
+#----------------------注册本CURDapp及注释掉其他app-------------------
+INSTALLED_APPS = [
+    # 'django.contrib.admin',
+    # 'django.contrib.auth',
+    # 'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    # 'django.contrib.messages',
+    'django.contrib.staticfiles',
+     'CURDService',  #注册本app
+]
+
+
+b.-----------------------新建my_curd.py 文件，并注册要使用的表及自定制功能----------
+from django.urls import reverse
+from django.utils.safestring import mark_safe
+
+from CURDCore import core_func
+#from app01 import models   #------从app中导入models
+
+
+class UserCurdAdmin(core_func.BaseCurdAdmin):
+    def edit(self, model_obj=None, is_header=False):
+        '编辑数据的函数，推荐使用'
+        if is_header:
+            return '编辑'
+        else:
+            from django.http.request import QueryDict
+            parms_dict = QueryDict(mutable=True)
+            if self.request.method == 'GET':
+                parms_dict['_changelistfilter'] = self.request.GET.urlencode()
+            name = '{0}:{1}_{2}_change'.format(self.site.namespace, model_obj._meta.app_label,
+                                               model_obj._meta.model_name)
+            url = reverse(name, args=(model_obj.pk,))  # s生成的结果同上方的edit   pk和id同样
+            edit_url = '{0}?{1}'.format(url, parms_dict.urlencode())
+            edit_tag = '<a href="%s">编辑</a>' % edit_url
+            return mark_safe(edit_tag)
+
+    def delete(self, model_obj=None, is_header=False):
+        '删除数据的函数，推荐使用'
+        if is_header:
+            return '删除'
+        else:
+            from django.http.request import QueryDict
+            parms_dict = QueryDict(mutable=True)
+            if self.request.method == 'GET':
+                parms_dict['_changelistfilter'] = self.request.GET.urlencode()
+            name = '{0}:{1}_{2}_delete'.format(self.site.namespace, model_obj._meta.app_label,
+                                               model_obj._meta.model_name)
+            url = reverse(name, args=(model_obj.pk,))  # s生成的结果同上方的edit   pk和id同样
+            delete_url = '{0}?{1}'.format(url, parms_dict.urlencode())
+            delete_tag = '<a href="%s">删除</a>' % delete_url
+            return mark_safe(delete_tag)
+
+
+    def combine_username_email(self, model_obj=None, is_header=False):
+        '自定制列，将字段名连接起来，供参考'
+        if is_header:
+            return '定制列'
+        else:
+            v = '%s--%s' % (model_obj.username, model_obj.email)
+            return v
+
+    def checkbox(self, model_obj=None, is_header=False):
+        '提供选择框，推荐使用'
+        if is_header:
+            return '选择'
+        else:
+            a_tag = '<input type="checkbox" name="pk" value="{0}">'.format(model_obj.pk)
+            return mark_safe(a_tag)
+
+    # action函数定义
+    def init_data(self, request):
+        'action动作 init_data'
+        received_data = request.POST.getlist('pk')
+        return True
+
+    init_data.text = '初始化数据'  #action动作的定制名称
+
+    def del_data(self, request):
+        'action动作 del_data'
+        return True
+
+    del_data.text = '删除数据'
+    action_list = [init_data, del_data]  #action动作的函数名，添加到此处可以生效
+    list_display = [checkbox, 'id', 'username', 'email', 'role', 'usergroup', edit, delete,
+                    combine_username_email]  #定制数据展示的内容，可以是字段名，也可以是函数名，函数必须定义在本类中
+    from utils.search_conditions import FilterOption
+    filter_list = [
+        FilterOption('username', is_multiple=True, text_func_name='text_username', val_func_name='val_username'),
+        FilterOption('role', is_multiple=False),
+        FilterOption('usergroup', is_multiple=True),
+        ]  #搜索条件的定制
+
+ #------------注册models中的字段
+core_func.site.register(models.User, UserCurdAdmin)  #注册models中的字段
+core_func.site.register(models.Role)
+core_func.site.register(models.UserGroup)
+

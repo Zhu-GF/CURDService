@@ -1,0 +1,19 @@
+{% load list_form %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>添加数据</title>
+</head>
+<body>
+<h1>添加数据</h1>
+<form action="" method="post" novalidate>
+    {% csrf_token %}
+    {# {{ form.as_p }}#}
+    {#
+    <hr>
+    #}
+    {% list_forms form %}
+</form>
+</body>
+</html>

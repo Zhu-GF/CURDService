@@ -1,0 +1,66 @@
+{% load list_view %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ChangeListView</title>
+    <link rel="stylesheet" href="{% static 'plugins/bootstrap-3.3.7-dist/css/bootstrap.min.css' %}">
+    <style>
+        .search_area a {
+            display: inline-block;
+            border: 1px solid #dddddd;
+            padding: 5px 8px;
+            margin: 5px;
+        }
+
+        .active {
+            color: white;
+            background-color: #2aabd2;
+        }
+
+        .all-area {
+            float: left;
+        }
+
+        .others-area {
+            padding-left: 70px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>数据展示</h1>
+
+    <div class="search_area">
+        {% for row in change_list_obj.gen_list_filter %}
+        {% for item in row %}
+        <span>{{ item }}</span>
+        {% endfor %}
+
+        {% endfor %}
+
+    </div>
+    <a href="{{ change_list_obj.add_button }}" class="btn btn-success">添加</a>
+
+    <form action="" method="post">
+        {% csrf_token %}
+        <div class="row">
+            <select name="action" class="form-control" style="width: 200px;display: inline-block"> {#action指的是函数名称#}
+                {% for row in change_list_obj.action_list %}
+                <option value="{{ row.name }}">{{ row.text }}</option>
+                {% endfor %}
+            </select>
+            <input type="submit" value="执行" class="btn btn-primary">
+        </div>
+
+        {% func change_list_obj.list_display change_list_obj.result_list change_list_obj.base_curd_admin_obj %}
+
+    </form>
+    <ul class="pager">
+        {{ change_list_obj.pager_tags|safe }}
+    </ul>
+</div>
+
+</body>
+</html>
